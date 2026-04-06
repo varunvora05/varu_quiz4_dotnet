@@ -1,0 +1,57 @@
+# varu_quiz4_ci_dotnet
+# CI Pipeline for ASP.NET MVC Web App - Varun
+# Self-Hosted Agent Pipeline
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: MyLocalAgent        # Self-hosted agent pool
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '8.0.x'
+
+stages:
+- stage: Build
+  displayName: 'Build Stage - Varun Quiz 4'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build and Publish ASP.NET App'
+    steps:
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET SDK 8.0'
+      inputs:
+        packageType: 'sdk'
+        version: '$(dotnetVersion)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet Packages'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build the Application'
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish the Application'
+      inputs:
+        command: 'publish'
+        publishWebProjects: true
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload Artifact to Pipeline'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
